@@ -85,6 +85,8 @@ project/
 ├── requirements.txt
 ├── .env.example
 └── README.md
+
+```
 Tech Stack
 
 Frontend / UI: Streamlit
@@ -102,24 +104,32 @@ Web Search: DDGS
 Environment Management: python-dotenv
 
 Setup Instructions
+        
 1. Clone the repository
+```
 git clone https://github.com/YOUR_USERNAME/neostats-smart-career-assistant.git
+
 cd neostats-smart-career-assistant
+```
 2. Create and activate a virtual environment
+```
 Windows PowerShell
 python -m venv .venv
 .venv\Scripts\Activate.ps1
 macOS / Linux
 python -m venv .venv
 source .venv/bin/activate
+```
 3. Install dependencies
+```
 pip install -r requirements.txt
+```
 4. Create a .env file
 
 Create a .env file in the project root using the values from .env.example.
 
 Example:
-
+```
 GROQ_API_KEY=your_groq_api_key_here
 DEFAULT_CHAT_MODEL=llama-3.1-8b-instant
 APP_TITLE=NeoStats Smart Career Assistant
@@ -127,8 +137,12 @@ DOCS_PATH=data/docs
 CHUNK_SIZE=500
 CHUNK_OVERLAP=100
 TOP_K_RESULTS=3
-Run the App Locally
+```
+5. Run the App Locally
+```
 streamlit run app.py
+```
+
 How It Works
 
 The user enters a career-related question in the Streamlit chat UI.
