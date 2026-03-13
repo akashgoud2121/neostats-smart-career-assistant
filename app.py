@@ -1,6 +1,7 @@
 import streamlit as st
 import os
 import sys
+from pathlib import Path
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
@@ -10,6 +11,27 @@ from utils.prompt_utils import build_system_prompt
 from utils.rag_utils import build_vectorstore, retrieve_relevant_context
 from utils.web_search import search_web
 from config.config import APP_TITLE, DEFAULT_CHAT_MODEL, DOCS_PATH
+
+
+UPLOAD_DIR = "uploaded_docs"
+
+
+def save_uploaded_files(uploaded_files):
+    """Save uploaded files locally for RAG processing."""
+    try:
+        os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+        saved_files = []
+        for uploaded_file in uploaded_files:
+            file_path = os.path.join(UPLOAD_DIR, uploaded_file.name)
+            with open(file_path, "wb") as f:
+                f.write(uploaded_file.getbuffer())
+            saved_files.append(file_path)
+
+        return saved_files
+
+    except Exception as e:
+        raise RuntimeError(f"Failed to save uploaded files: {str(e)}")
 
 
 def get_chat_response(chat_model, messages, system_prompt, response_mode):
@@ -27,10 +49,11 @@ def get_chat_response(chat_model, messages, system_prompt, response_mode):
                             f"{content}\n\n"
                             "IMPORTANT: Follow the selected UI response mode strictly. "
                             "Return a concise answer only. "
-                            "Maximum 5 short sentences. "
+                            "Maximum 5 short sentences and maximum 80 words total. "
                             "No headings. "
                             "No bullet points. "
                             "No long explanations. "
+                            "Summarize only the most important points. "
                             "Even if the user asks for a detailed answer, keep it concise."
                         )
                     else:
@@ -60,7 +83,6 @@ def get_chat_response(chat_model, messages, system_prompt, response_mode):
 
 
 def instructions_page():
-    """Instructions and setup page."""
     st.title("The Chatbot Blueprint")
     st.markdown("Welcome! Follow these instructions to set up and use the chatbot.")
 
@@ -89,32 +111,24 @@ def instructions_page():
 
     - Groq-based chatbot
     - RAG over local TXT/PDF documents
+    - Upload your own documents
     - Live web search
     - Concise and Detailed response modes
-
-    ## How to Use
-
-    1. Go to the Chat page
-    2. Select response mode
-    3. Enable/disable document search
-    4. Enable/disable web search
-    5. Ask career-related questions
     """)
 
 
-@st.cache_resource
-def load_vectorstore():
-    """Load and cache the vector store."""
+@st.cache_resource(show_spinner=False)
+def load_vectorstore_cached(folder_path):
+    """Load and cache vectorstore based on folder path."""
     try:
-        vectorstore, split_docs = build_vectorstore()
+        vectorstore, split_docs = build_vectorstore(folder_path)
         return vectorstore, split_docs
     except Exception as e:
         st.error(f"Error loading vector store: {str(e)}")
         return None, []
 
 
-def chat_page(response_mode, enable_rag, enable_web_search):
-    """Main chat interface page."""
+def chat_page(response_mode, enable_rag, enable_web_search, active_docs_path):
     st.title(f"🤖 {APP_TITLE}")
     st.caption(f"Current model: {DEFAULT_CHAT_MODEL}")
     st.caption(f"Response mode: {response_mode}")
@@ -129,8 +143,8 @@ def chat_page(response_mode, enable_rag, enable_web_search):
     split_docs = []
 
     if enable_rag:
-        vectorstore, split_docs = load_vectorstore()
-        st.caption(f"Document search enabled | Loaded chunks: {len(split_docs)} | Docs folder: {DOCS_PATH}")
+        vectorstore, split_docs = load_vectorstore_cached(active_docs_path)
+        st.caption(f"Document search enabled | Loaded chunks: {len(split_docs)} | Docs folder: {active_docs_path}")
     else:
         st.caption("Document search disabled")
 
@@ -218,6 +232,7 @@ def main():
     response_mode = "Concise"
     enable_rag = True
     enable_web_search = True
+    active_docs_path = DOCS_PATH
 
     with st.sidebar:
         st.title("Navigation")
@@ -236,6 +251,21 @@ def main():
             enable_web_search = st.checkbox("Enable Live Web Search", value=True)
 
             st.divider()
+            st.subheader("Upload Documents")
+            uploaded_files = st.file_uploader(
+                "Upload TXT or PDF files",
+                type=["txt", "pdf"],
+                accept_multiple_files=True
+            )
+
+            if uploaded_files:
+                save_uploaded_files(uploaded_files)
+                active_docs_path = UPLOAD_DIR
+                st.success(f"{len(uploaded_files)} file(s) uploaded successfully.")
+            else:
+                active_docs_path = DOCS_PATH
+
+            st.divider()
             if st.button("🗑️ Clear Chat History", use_container_width=True):
                 st.session_state.messages = []
                 st.rerun()
@@ -243,7 +273,7 @@ def main():
     if page == "Instructions":
         instructions_page()
     elif page == "Chat":
-        chat_page(response_mode, enable_rag, enable_web_search)
+        chat_page(response_mode, enable_rag, enable_web_search, active_docs_path)
 
 
 if __name__ == "__main__":

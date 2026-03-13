@@ -10,10 +10,11 @@ from models.embeddings import get_embedding_model
 from utils.file_loader import load_documents_from_folder
 
 
-def build_vectorstore():
+def build_vectorstore(folder_path=None):
     """Load documents, split them, and build a FAISS vector store."""
     try:
-        documents = load_documents_from_folder(DOCS_PATH)
+        target_folder = folder_path or DOCS_PATH
+        documents = load_documents_from_folder(target_folder)
 
         if not documents:
             return None, []

@@ -8,5 +8,4 @@ langchain-text-splitters
 faiss-cpu
 pypdf
 fastembed
-duckduckgo-search
 ddgs
