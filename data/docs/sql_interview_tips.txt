@@ -1,0 +1,3 @@
+SQL interview preparation should include joins, group by, case when, subqueries, CTEs, and window functions.
+Candidates should practice writing queries from business questions and explain why they chose a specific approach.
+Performance basics such as indexing, filtering early, and avoiding unnecessary joins can also be useful.

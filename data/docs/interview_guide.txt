@@ -1,0 +1,3 @@
+A data analyst interview usually tests SQL, statistics, Excel, dashboards, and business thinking.
+Candidates should prepare for data cleaning questions, missing value handling, joins, aggregations, and case-based problem solving.
+Strong candidates explain their thinking clearly, use structured answers, and connect analysis to business outcomes.
